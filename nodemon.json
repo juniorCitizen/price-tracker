@@ -1,0 +1,6 @@
+{
+  "watch": ["src", "tsconfig.json", "views"],
+  "ext": "ts, handlebars",
+  "ignore": [],
+  "exec": "npm run build:css && ts-node -r dotenv/config src"
+}
