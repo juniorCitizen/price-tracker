@@ -43,9 +43,8 @@
   },
   "scripts": {
     "dev": "nodemon",
-    "build": "rimraf ./dist && npm run build:css && tsc",
+    "build": "rimraf ./dist && tsc",
     "start": "node -r dotenv/config dist/index.js",
-    "build:css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
     "test": "jest"
   }
 }
