@@ -1,5 +1,5 @@
 module.exports = {
-  mode: 'jit',
+  // mode: 'jit',
   purge: ['./views/**/*.handlebars'],
   darkMode: false, // or 'media' or 'class'
   theme: {
