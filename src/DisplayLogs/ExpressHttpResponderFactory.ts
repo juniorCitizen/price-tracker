@@ -1,15 +1,16 @@
 import {NextFunction, Request, Response} from 'express'
-import {ExpressHttpResponder} from './ExpressHttpResponder'
-import {Presenter, PresenterFactory} from '../appLayer/RegistrationProcessor'
+import {HttpResponder} from './HttpResponder'
+import {HttpResponderFactory} from './HttpResponderFactory'
+import ExpressHttpResponder from './ExpressHttpResponder'
 
-export class ExpressHttpResponderFactory implements PresenterFactory {
+export class ExpressHttpResponderFactory implements HttpResponderFactory {
   constructor(
     private req: Request,
     private res: Response,
     private next: NextFunction,
   ) {}
 
-  make(): Presenter {
+  make(): HttpResponder {
     return new ExpressHttpResponder(this.req, this.res, this.next)
   }
 }

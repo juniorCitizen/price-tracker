@@ -1,9 +1,9 @@
-import AbstractExpressHttpResponder from '../../adapterLayer/ExpressHttpResponder'
-import {Presenter} from '../appLayer/RegistrationProcessor'
+import AbstractExpressHttpResponder from '../adapterLayer/ExpressHttpResponder'
+import {HttpResponder} from './HttpResponder'
 
 export class ExpressHttpResponder
   extends AbstractExpressHttpResponder<string>
-  implements Presenter
+  implements HttpResponder
 {
   ok(message?: string): void {
     message === undefined

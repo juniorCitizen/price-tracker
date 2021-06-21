@@ -1,6 +1,6 @@
-import AbstractExpressHttpResponder from '../../adapterLayer/ExpressHttpResponder'
-import {ExecutionLogEntry} from '../../domainLayer/ExecutionLogEntry'
-import {HttpResponder} from '../appLayer/HttpResponder'
+import AbstractExpressHttpResponder from '../adapterLayer/ExpressHttpResponder'
+import {ExecutionLogEntry} from '../domainLayer/ExecutionLogEntry'
+import {HttpResponder} from './HttpResponder'
 
 export class ExpressHttpResponder
   extends AbstractExpressHttpResponder<ExecutionLogEntry[]>

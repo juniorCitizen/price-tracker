@@ -1,8 +1,8 @@
 import {Express, RequestHandler} from 'express'
 import {SubscriberRepository} from '../appLayer/SubscriberValidator'
-import ExecutionLogEntryDisplayDriver from './adapterLayer/ExecutionLogEntryDisplayDriver'
-import ExpressHttpResponderFactory from './adapterLayer/ExpressHttpResponderFactory'
-import {ExecutionLogEntryRepository} from './appLayer/ExecutionLogEntryRepository'
+import ExecutionLogEntryDisplayDriver from './ExecutionLogEntryDisplayDriver'
+import ExpressHttpResponderFactory from './ExpressHttpResponderFactory'
+import {ExecutionLogEntryRepository} from './ExecutionLogEntryRepository'
 
 export function enableLogDisplay(
   routePath: string,
@@ -20,7 +20,7 @@ export function enableLogDisplay(
       dependencies.subscriberRepository,
       httpResponderFactory,
     )
-    executionLogEntryDisplayDriver.display(req.query)
+    executionLogEntryDisplayDriver.driveExecuteionLogEntryDisplay(req.query)
   }
   dependencies.app[httpVerb](routePath, requestHandler)
 }

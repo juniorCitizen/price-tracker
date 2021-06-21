@@ -8,7 +8,7 @@ import {PriceRecordGoogleSheetsRepository as PriceRecordRepository} from './adap
 import {SubscriberArrayRepository as SubscriberRepository} from './adapterLayer/SubscriberArrayRepository'
 import enableCollectAll from './CollectData/enableAllAssetsDataCollection'
 import enableCollectOne from './CollectData/enableSingleAssetDataCollection'
-import enableLogDisplay from './DisplayExecutionLogEntries'
+import enableLogDisplay from './DisplayLogs'
 import executionLogEntryArray from './infraLayer/executionLogEntryArray'
 import subscriberArray from './infraLayer/subscriberArray'
 import enableRegistration from './ProcessRegistration'
@@ -17,9 +17,10 @@ import startWebServer from './StartWebServer'
 
 void (() => {
   try {
+    const isProd = (process.env['NODE_ENV'] || 'development') === 'production'
     const app = express()
     app.use(helmet())
-    app.use(morgan('dev'))
+    app.use(morgan(isProd ? 'combine' : 'dev'))
     app.use(express.json())
     app.use(express.urlencoded({extended: false}))
     app.use(express.static('public'))
@@ -33,7 +34,7 @@ void (() => {
     })
     enableRegistration('/subscribe', 'post', {
       app,
-      repository: subscriberRepository,
+      subscriberRepository,
     })
     const executionLogEntryRepository = new ExecutionLogEntryRepository(
       executionLogEntryArray,
@@ -64,7 +65,7 @@ void (() => {
       subscriberRepository,
     })
     enableReporting('/report', 'post', {
-      connectionString: process.env['SMTP_CON_STR'],
+      connectionString: process.env['SMTP_CONNECTION_STRING'],
       emailSenderName: process.env['EMAIL_SENDER_NAME'],
       emailSenderAddress: process.env['EMAIL_SENDER_ADDRESS'],
       app,

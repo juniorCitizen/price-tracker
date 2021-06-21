@@ -7,7 +7,7 @@ export class ExecutionLogEntryDisplay {
     private httpResponder: HttpResponder,
   ) {}
 
-  display(): void {
+  displayExecutionLogEntries(): void {
     try {
       const logEntries = this.executeLogEntryDisplay.fetch()
       this.httpResponder.ok(logEntries)

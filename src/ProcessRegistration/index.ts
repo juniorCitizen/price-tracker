@@ -1,22 +1,22 @@
 import {Express, RequestHandler} from 'express'
-import {ExpressHttpResponderFactory} from './adapterLayer/ExpressHttpResponderFactory'
-import Driver from './adapterLayer/RegistrationProcessorDriver'
-import {Repository} from './appLayer/RegistrationProcessor'
+import {ExpressHttpResponderFactory} from './ExpressHttpResponderFactory'
+import RegistrationProcessorDriver from './RegistrationProcessorDriver'
+import {SubscriberRepository} from './SubscriberRepository'
 
 export function enableRegistration(
   routePath: string,
   httpVerb: 'get' | 'post',
   dependencies: {
     app: Express
-    repository: Repository
+    subscriberRepository: SubscriberRepository
   },
 ): void {
   const requestHandler: RequestHandler = (req, res, next) => {
-    const driver = new Driver(
-      dependencies.repository,
+    const registrationProcessorDriver = new RegistrationProcessorDriver(
+      dependencies.subscriberRepository,
       new ExpressHttpResponderFactory(req, res, next),
     )
-    driver.processRegistration(req.body)
+    registrationProcessorDriver.driveRegistrationProcessor(req.body)
   }
   dependencies.app[httpVerb](routePath, requestHandler)
 }

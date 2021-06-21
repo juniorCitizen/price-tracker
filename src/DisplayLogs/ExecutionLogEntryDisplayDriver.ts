@@ -2,10 +2,10 @@ import SubscriberValidator, {
   InvalidCredentials,
   NonSubscriber,
   SubscriberRepository,
-} from '../../appLayer/SubscriberValidator'
-import ExecutionLogEntryDisplay from '../appLayer/ExecutionLogEntryDisplay'
-import {ExecutionLogEntryRepository} from '../appLayer/ExecutionLogEntryRepository'
-import {HttpResponderFactory} from '../appLayer/HttpResponderFactory'
+} from '../appLayer/SubscriberValidator'
+import ExecutionLogEntryDisplay from './ExecutionLogEntryDisplay'
+import {ExecutionLogEntryRepository} from './ExecutionLogEntryRepository'
+import {HttpResponderFactory} from './HttpResponderFactory'
 
 export class ExecutionLogEntryDisplayDriver {
   constructor(
@@ -14,7 +14,7 @@ export class ExecutionLogEntryDisplayDriver {
     private httpResponderFactory: HttpResponderFactory,
   ) {}
 
-  display(subscriberInfo: unknown): void {
+  driveExecuteionLogEntryDisplay(subscriberInfo: unknown): void {
     const httpResponder = this.httpResponderFactory.make()
     try {
       const validator = new SubscriberValidator(this.subscriberRepository)
@@ -23,7 +23,7 @@ export class ExecutionLogEntryDisplayDriver {
         this.executionLogEntryRepository,
         httpResponder,
       )
-      executeionLogEntryDisplay.display()
+      executeionLogEntryDisplay.displayExecutionLogEntries()
     } catch (error) {
       if (error instanceof InvalidCredentials) {
         httpResponder.badRequest(error.message)
