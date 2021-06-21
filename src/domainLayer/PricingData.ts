@@ -120,7 +120,7 @@ export class PriceData {
     return this._priceSelector
   }
 
-  get dateSource(): string {
+  get dataSource(): string {
     return this._source
   }
 
