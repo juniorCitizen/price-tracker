@@ -71,7 +71,7 @@ export abstract class DataCollector {
     )
     if (exists) {
       const recordDate = priceRecordValue.date
-      const dataSource = parameters.dateSource
+      const dataSource = parameters.dataSource
       const assetName = parameters.tradedAssetName
       const msg = `${recordDate} ${dataSource}${assetName} price data already exists`
       throw new RecordAlreadyExists(msg)
