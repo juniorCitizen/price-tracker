@@ -4,7 +4,6 @@
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     // project options
-    "incremental": true,
     "module": "CommonJS",
     "outDir": "dist",
     "removeComments": true,
