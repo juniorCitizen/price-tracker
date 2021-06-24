@@ -1,5 +1,4 @@
 import express from 'express'
-import expressHandlebars from 'express-handlebars'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import {ExecutionLogEntryArrayRepository as ExecutionLogEntryRepository} from './adapterLayer/ExecutionLogEntryArrayRepository'
@@ -8,7 +7,6 @@ import {PriceRecordGoogleSheetsRepository as PriceRecordRepository} from './adap
 import {SubscriberArrayRepository as SubscriberRepository} from './adapterLayer/SubscriberArrayRepository'
 import enableCollectAll from './CollectData/enableAllAssetsDataCollection'
 import enableCollectOne from './CollectData/enableSingleAssetDataCollection'
-import enableLogDisplay from './DisplayLogs'
 import executionLogEntryArray from './infraLayer/executionLogEntryArray'
 import subscriberArray from './infraLayer/subscriberArray'
 import enableRegistration from './ProcessRegistration'
@@ -23,14 +21,8 @@ void (() => {
     app.use(morgan(isProd ? 'combine' : 'dev'))
     app.use(express.json())
     app.use(express.urlencoded({extended: false}))
-    app.use(express.static('public'))
-    app.engine('handlebars', expressHandlebars())
-    app.set('view engine', 'handlebars')
     const subscriberRepository = new SubscriberRepository(subscriberArray, {
       maxRecordLimit: 2,
-    })
-    app.get('/', (_req, res) => {
-      res.render('index')
     })
     enableRegistration('/subscribe', 'post', {
       app,
@@ -39,11 +31,6 @@ void (() => {
     const executionLogEntryRepository = new ExecutionLogEntryRepository(
       executionLogEntryArray,
     )
-    enableLogDisplay('/logs', 'get', {
-      app,
-      executionLogEntryRepository,
-      subscriberRepository,
-    })
     const googleSheetsOpts = {
       spreadsheetId: process.env['SPREADSHEET_ID'],
       credentials: process.env['GOOGLE_API_CREDENTIALS'],
