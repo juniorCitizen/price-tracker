@@ -30,6 +30,14 @@ export class BooleanValueCreationFailure extends Error {
   }
 }
 
+export class InvalidRequestModel extends Error {
+  constructor(msg: string) {
+    super(msg)
+    this.name = 'InvalidRequestModel'
+    Object.setPrototypeOf(this, InvalidRequestModel.prototype)
+  }
+}
+
 export class NoWorkableParameters extends Error {
   constructor(msg: string) {
     super(msg)

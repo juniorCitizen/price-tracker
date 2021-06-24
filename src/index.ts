@@ -15,6 +15,7 @@ import startWebServer from './StartWebServer'
 
 void (() => {
   try {
+    const PORT = process.env['PORT'] || '3000'
     const isProd = (process.env['NODE_ENV'] || 'development') === 'production'
     const app = express()
     app.use(helmet())
@@ -60,7 +61,7 @@ void (() => {
       priceRecordRepository,
       subscriberRepository,
     })
-    startWebServer(app, process.env['PORT'])
+    startWebServer(app, PORT)
   } catch (error) {
     console.error(error)
   }
