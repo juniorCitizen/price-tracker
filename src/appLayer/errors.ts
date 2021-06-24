@@ -1,3 +1,35 @@
+export class TypeAssertionFailure extends Error {
+  constructor(msg: string) {
+    super(msg)
+    this.name = 'TypeAssertionFailure'
+    Object.setPrototypeOf(this, TypeAssertionFailure.prototype)
+  }
+}
+
+export class StringValueCreationFailure extends Error {
+  constructor(msg: string) {
+    super(msg)
+    this.name = 'StringValueCreationFailure'
+    Object.setPrototypeOf(this, StringValueCreationFailure.prototype)
+  }
+}
+
+export class NumericValueCreationFailure extends Error {
+  constructor(msg: string) {
+    super(msg)
+    this.name = 'NumericValueCreationFailure'
+    Object.setPrototypeOf(this, NumericValueCreationFailure.prototype)
+  }
+}
+
+export class BooleanValueCreationFailure extends Error {
+  constructor(msg: string) {
+    super(msg)
+    this.name = 'BooleanValueCreationFailure'
+    Object.setPrototypeOf(this, BooleanValueCreationFailure.prototype)
+  }
+}
+
 export class NoWorkableParameters extends Error {
   constructor(msg: string) {
     super(msg)
