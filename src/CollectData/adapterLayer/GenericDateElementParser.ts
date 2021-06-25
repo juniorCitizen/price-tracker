@@ -1,7 +1,7 @@
+import {AssetId} from '../../domainLayer/AssetId'
 import {HtmlElement} from '../../domainLayer/HtmlElement'
-import {TradedAssetId} from '../../domainLayer/TradedAssetId'
 import {TradingDate} from '../../domainLayer/TradingDate'
-import {DateElementParser} from '../appLayer/DateElementParser'
+import {DateElementParser} from '../appLayer/DataCollector'
 
 export interface ParseDateElement {
   (htmlElementValue: string): Date
@@ -21,10 +21,7 @@ export class GenericDateElementParser implements DateElementParser {
     private stringifyDate: StringifyDate,
   ) {}
 
-  execute(
-    htmlElement: HtmlElement,
-    parseDateElementId: TradedAssetId,
-  ): TradingDate {
+  parse(htmlElement: HtmlElement, parseDateElementId: AssetId): TradingDate {
     const parseDateElement =
       this.parseDateElementCache[parseDateElementId.value]
     if (parseDateElement === undefined) {

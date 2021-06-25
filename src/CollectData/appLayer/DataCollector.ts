@@ -1,104 +1,158 @@
+import {Persistence as ExecutionLogPersistence} from '../../appLayer/ExecutionLogRepository'
+import {
+  BadRequest,
+  Conflict,
+  Forbidden,
+  InternalServerError,
+  NotFound,
+  Ok,
+  Reporting,
+  Unauthorized,
+} from '../../appLayer/Presenter'
+import {
+  Existence as PriceRecordExistence,
+  Persistence as PriceRecordPersistence,
+} from '../../appLayer/PriceRecordRepository'
+import {
+  Fetching as AssetFetching,
+  FetchingById as AssetFetchingById,
+} from '../../appLayer/TrackedAssetRepository'
+import {AssetId} from '../../domainLayer/AssetId'
+import {ExecutionResult} from '../../domainLayer/ExecutionResult'
+import {Html} from '../../domainLayer/Html'
+import {HtmlElement} from '../../domainLayer/HtmlElement'
 import {HtmlSelector} from '../../domainLayer/HtmlSelector'
-import {Parameters} from '../../domainLayer/Parameters'
-import {PriceRecord, PriceRecordDS} from '../../domainLayer/PriceRecord'
-import {TradedAssetId} from '../../domainLayer/TradedAssetId'
+import {PricingData} from '../../domainLayer/PricingData'
+import {Subscriber} from '../../domainLayer/Subscriber'
+import {TrackedAsset} from '../../domainLayer/TrackedAsset'
+import {TradingDate} from '../../domainLayer/TradingDate'
+import {TradingPrice} from '../../domainLayer/TradingPrice'
 import {Url} from '../../domainLayer/Url'
-import {DateElementParser} from './DateElementParser'
-import {ExecutionLogEntryRepository} from './ExecutionLogEntryRepository'
-import {HtmlElementExtractor} from './HtmlElementExtractor'
-import {HtmlFetcher} from './HtmlFetcher'
-import {HttpResponder} from './HttpResponder'
-import {ParametersRepository} from './ParametersRepository'
-import {PriceElementParaser} from './PriceElementParser'
-import {PriceRecordRepository} from './PriceRecordRepository'
+
+export type ExecutionLogRepository = ExecutionLogPersistence
+
+export interface PriceRecordRepository
+  extends PriceRecordExistence,
+    PriceRecordPersistence {}
+
+export interface TrackedAssetRepository
+  extends AssetFetching,
+    AssetFetchingById {}
+
+export interface HtmlFetcher {
+  fetch(url: Url, transformUrlId: AssetId): Promise<Html>
+}
+
+export interface HtmlElementExtractor {
+  extract(html: Html, htmlSelector: HtmlSelector): HtmlElement
+}
+
+export interface DateElementParser {
+  parse(htmlElement: HtmlElement, parseDateElementId: AssetId): TradingDate
+}
+
+export interface PriceElementParser {
+  parse(htmlElement: HtmlElement, parsePriceElementId: AssetId): TradingPrice
+}
+
+export interface HttpResponder
+  extends Ok<string>,
+    InternalServerError,
+    Unauthorized,
+    NotFound,
+    Forbidden,
+    Conflict,
+    BadRequest,
+    Reporting<unknown> {}
 
 export abstract class DataCollector {
   constructor(
-    protected executionLogEntryRepository: ExecutionLogEntryRepository,
-    protected parametersRepository: ParametersRepository,
-    protected priceRecordRepository: PriceRecordRepository,
+    // services
     protected htmlFetcher: HtmlFetcher,
     protected htmlElementExtractor: HtmlElementExtractor,
     protected dateElementParser: DateElementParser,
-    protected priceElementParser: PriceElementParaser,
+    protected priceElementParser: PriceElementParser,
+    // repositories
+    protected executionLogRepository: ExecutionLogRepository,
+    protected priceRecordRepository: PriceRecordRepository,
+    protected trackedAssetRepository: TrackedAssetRepository,
+    // presenters
     protected httpResponder: HttpResponder,
+    private subscriber: Subscriber,
   ) {}
 
-  protected async scrapeWebsite(
-    parameters: Parameters,
-  ): Promise<PriceRecordDS> {
+  protected async scrapeWebsite(asset: TrackedAsset): Promise<PricingData> {
     try {
-      const url = Url.create(parameters.siteUrl)
-      const tradedAssetId = TradedAssetId.create(parameters.tradedAssetId)
-      const html = await this.htmlFetcher.execute(url, tradedAssetId)
-      const dateElement = this.htmlElementExtractor.execute(
-        html,
-        HtmlSelector.create(parameters.dateSelector),
+      const html = await this.htmlFetcher.fetch(asset.url, asset.id)
+      const tradingDate = this.dateElementParser.parse(
+        this.htmlElementExtractor.extract(html, asset.dateSelector),
+        asset.id,
       )
-      const tradingDate = this.dateElementParser.execute(
-        dateElement,
-        tradedAssetId,
+      const tradingPrice = this.priceElementParser.parse(
+        this.htmlElementExtractor.extract(html, asset.priceSelector),
+        asset.id,
       )
-      const priceElement = this.htmlElementExtractor.execute(
-        html,
-        HtmlSelector.create(parameters.priceSelector),
-      )
-      const tradingPrice = this.priceElementParser.execute(
-        priceElement,
-        tradedAssetId,
-      )
-      return PriceRecord.validate({
-        date: tradingDate.value,
-        price: tradingPrice.value,
-      })
+      return PricingData.create({date: tradingDate, price: tradingPrice})
     } catch (error) {
       if (error instanceof Error) {
-        const msg = `failed to scrape from ${parameters.siteName} (${error.message})`
-        throw new DataScrapingFailure(msg)
+        const reason = error.message
+        const msg = `failed to scrape from ${asset.website.value} (${reason})`
+        throw new WebsiteScrapingFailure(msg)
       }
       throw error
     }
   }
 
   protected async persistData(
-    priceRecordValue: PriceRecordDS,
-    parameters: Parameters,
+    pricingData: PricingData,
+    asset: TrackedAsset,
   ): Promise<void> {
-    const assetId = TradedAssetId.create(parameters.tradedAssetId)
     const exists = await this.priceRecordRepository.exists(
-      assetId,
-      priceRecordValue,
+      asset.id,
+      pricingData,
     )
     if (exists) {
-      const recordDate = priceRecordValue.date
-      const dataSource = parameters.dataSource
-      const assetName = parameters.tradedAssetName
-      const msg = `${recordDate} ${dataSource}${assetName} price data already exists`
+      const date = pricingData.date.value
+      const source = asset.source.value
+      const name = asset.name.value
+      const msg = `${date} ${source}${name} price data already exists`
       throw new RecordAlreadyExists(msg)
     }
-    await this.priceRecordRepository.persist(assetId, priceRecordValue)
+    await this.priceRecordRepository.persist(asset.id, pricingData)
   }
 
-  protected log(
-    _parameters: Parameters,
-    success: boolean,
-    message?: string,
-  ): void {
-    const timestamp = Date.now()
-    const parameters = _parameters.value
-    const payload =
-      message === undefined
-        ? {timestamp, parameters, success}
-        : {timestamp, parameters, success, message}
-    this.executionLogEntryRepository.persist(payload)
+  protected logSuccess(data: {
+    trackedAsset: TrackedAsset
+    message?: string
+  }): void {
+    const executionResult = ExecutionResult.create({
+      subscriber: this.subscriber,
+      trackedAsset: data.trackedAsset,
+      success: true,
+      message: data.message,
+    })
+    this.executionLogRepository.persist(executionResult)
+  }
+
+  protected logFailure(data: {
+    trackedAsset?: TrackedAsset
+    message: string
+  }): void {
+    const executionResult = ExecutionResult.create({
+      subscriber: this.subscriber,
+      trackedAsset: data.trackedAsset,
+      success: false,
+      message: data.message,
+    })
+    this.executionLogRepository.persist(executionResult)
   }
 }
 
-export class DataScrapingFailure extends Error {
+export class WebsiteScrapingFailure extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'DataScrapingFailure'
-    Object.setPrototypeOf(this, DataScrapingFailure.prototype)
+    this.name = 'WebsiteScrapingFailure'
+    Object.setPrototypeOf(this, WebsiteScrapingFailure.prototype)
   }
 }
 

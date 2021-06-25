@@ -6,10 +6,10 @@ import {ServerPort} from '../domainLayer/ServerPort'
 export type WebServer = Starter
 
 export class WebServerStarter {
-  static validateRequestModel(candidate: string): ServerPort {
+  static validateRequestModel(candidate: unknown): ServerPort {
     try {
-      const serverPortValue = NumericValue.validate(candidate)
-      return ServerPort.create(serverPortValue)
+      const numericValue = NumericValue.create(candidate).value
+      return ServerPort.create(numericValue)
     } catch (error) {
       if (error instanceof Error) {
         const reason = error.message

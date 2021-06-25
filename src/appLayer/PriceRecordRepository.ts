@@ -1,24 +1,16 @@
+import {AssetId} from '../domainLayer/AssetId'
 import {FetchFilter} from '../domainLayer/FetchFilter'
-import {PriceRecord, PriceRecordDS} from '../domainLayer/PriceRecord'
-import {TradedAssetId} from '../domainLayer/TradedAssetId'
+import {PriceRecord} from '../domainLayer/PriceRecord'
+import {PricingData} from '../domainLayer/PricingData'
 
 export interface Existence {
-  exists(
-    tradedAssetId: TradedAssetId,
-    priceRecordValue: PriceRecordDS,
-  ): Promise<boolean>
+  exists(assetId: AssetId, pricingData: PricingData): Promise<boolean>
 }
 
 export interface Fetching {
-  fetch(
-    tradedAssetId: TradedAssetId,
-    filter: FetchFilter,
-  ): Promise<PriceRecord[]>
+  fetch(assetId: AssetId, filter: FetchFilter): Promise<PriceRecord[]>
 }
 
 export interface Persistence {
-  persist(
-    tradedAssetId: TradedAssetId,
-    priceRecordValue: PriceRecordDS,
-  ): Promise<void>
+  persist(assetId: AssetId, pricingData: PricingData): Promise<void>
 }

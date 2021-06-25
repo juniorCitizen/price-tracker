@@ -1,88 +1,35 @@
-import {JWT, JWTInput} from 'google-auth-library'
-import {google, sheets_v4} from 'googleapis'
+import {NumericValue} from '../appLayer/NumericValue'
 import {
   Existence,
   Fetching,
   Persistence,
 } from '../appLayer/PriceRecordRepository'
+import {StringValue} from '../appLayer/StringValue'
+import {AssetId} from '../domainLayer/AssetId'
 import {FetchFilter} from '../domainLayer/FetchFilter'
-import {PriceRecord, PriceRecordDS} from '../domainLayer/PriceRecord'
-import {TradedAssetId} from '../domainLayer/TradedAssetId'
+import {PriceRecord} from '../domainLayer/PriceRecord'
+import {PricingData} from '../domainLayer/PricingData'
+import {GoogleSheetsRepository} from './GoogleSheetsRepository'
 
 export class PriceRecordGoogleSheetsRepository
+  extends GoogleSheetsRepository
   implements Existence, Fetching, Persistence
 {
-  private api: sheets_v4.Sheets
-  private authClient: JWT
-  private spreadsheetId: string
   constructor(options: {
     spreadsheetId: string | undefined
     credentials: string | undefined
   }) {
-    if (options.spreadsheetId === undefined) {
-      const msg = 'spreadsheet id is undefined'
-      throw new Error(msg)
-    }
-    this.spreadsheetId = options.spreadsheetId
-    if (options.credentials === undefined) {
-      const msg = 'API credentials is undefined'
-      throw new Error(msg)
-    }
-    const credentials = JSON.parse(
-      options.credentials.replace(/\n/g, '\\n'),
-    ) as JWTInput
-    this.authClient = google.auth.fromJSON(credentials) as JWT
-    this.authClient.scopes = ['https://www.googleapis.com/auth/spreadsheets']
-    this.api = google.sheets({version: 'v4', auth: this.authClient})
+    super(options)
   }
 
-  private async getSheets(): Promise<sheets_v4.Schema$Sheet[]> {
-    try {
-      const options = {spreadsheetId: this.spreadsheetId}
-      const response = await this.api.spreadsheets.get(options)
-      if (response.status !== 200) {
-        const msg = `${response.status} ${response.statusText}`
-        throw new Error(msg)
-      }
-      if (response.data.sheets === undefined) {
-        const msg = 'undefined spreadsheet properties'
-        throw new Error(msg)
-      }
-      return response.data.sheets
-    } catch (error) {
-      if (error instanceof Error) {
-        const reason = error.message
-        const msg = `failed to get spreadsheet properties (reason: ${reason})`
-        throw new Error(msg)
-      }
-      throw error
-    }
-  }
-
-  private async getSheetId(sheetName: string): Promise<number> {
-    try {
-      const sheets = await this.getSheets()
-      for (const sheet of sheets) {
-        if (sheet.properties === undefined) break
-        if (sheet.properties.title === sheetName) {
-          const sheetId = sheet.properties?.sheetId
-          if (typeof sheetId !== 'number') {
-            const msg = 'does not have a valid sheet id'
-            throw new Error(msg)
-          }
-          return sheetId
-        }
-      }
-      const msg = 'does not exist in spreadsheet'
-      throw new Error(msg)
-    } catch (error) {
-      if (error instanceof Error) {
-        const reason = error.message
-        const msg = `failed to get sheet id from "${sheetName}" (reason: ${reason})`
-        throw new Error(msg)
-      }
-      throw error
-    }
+  private getRange(parameters: {
+    pageNumber?: number
+    pageSize?: number | undefined
+  }): string {
+    const {pageNumber = 1, pageSize = undefined} = parameters
+    const startRow = (pageNumber - 1) * (pageSize ?? 0) + 2
+    const endRow = pageSize !== undefined ? startRow + pageSize - 1 : ''
+    return `A${startRow}:B${endRow}`
   }
 
   private async sortByDate(
@@ -96,10 +43,9 @@ export class PriceRecordGoogleSheetsRepository
     const range = {sheetId, startRowIndex: 1, endColumnIndex: 2}
     const sortOrder = order === 'ascending' ? 'ASCENDING' : 'DESCENDING'
     const sortSpecs = [{dimensionIndex: 0, sortOrder}]
+    const sortRange = {range, sortSpecs}
     try {
-      const requestBody = {
-        requests: [{sortRange: {range, sortSpecs}}],
-      }
+      const requestBody = {requests: [{sortRange}]}
       const response = await this.api.spreadsheets.batchUpdate({
         spreadsheetId: this.spreadsheetId,
         requestBody,
@@ -111,30 +57,27 @@ export class PriceRecordGoogleSheetsRepository
     } catch (error) {
       if (error instanceof Error) {
         const reason = error.message
-        const msg = `failed to sort ${sheetNameOrId} (reason: ${reason})`
+        const msg = `failed to sort ${sheetNameOrId} (${reason})`
         throw new Error(msg)
       }
       throw error
     }
   }
 
-  async exists(
-    sheetName: TradedAssetId,
-    priceRecordValue: PriceRecordDS,
-  ): Promise<boolean> {
+  async exists(assetId: AssetId, pricingData: PricingData): Promise<boolean> {
+    const sheetNameValue = assetId.value
+    const dateValue = pricingData.date.value
+    let dataset: PriceRecord[]
+    let pageNumber = 1
+    const filter = FetchFilter.create({
+      order: 'descending',
+      pageNumber,
+      pageSize: 500,
+    })
     try {
-      let dataset: PriceRecordDS[]
-      let pageNumber = 1
       do {
-        dataset = await this.fetch(
-          sheetName,
-          FetchFilter.create({
-            order: 'descending',
-            pageNumber,
-            pageSize: 500,
-          }),
-        )
-        if (dataset.some(data => data.date === priceRecordValue.date)) {
+        dataset = await this.fetch(assetId, filter)
+        if (dataset.some(data => data.date.value === dateValue)) {
           return true
         }
         pageNumber++
@@ -143,50 +86,33 @@ export class PriceRecordGoogleSheetsRepository
     } catch (error) {
       if (error instanceof Error) {
         const reason = error.message
-        const msg = `failed to determine existence of data on ${priceRecordValue.date} from "${sheetName.value}" (reason: ${reason})`
+        const msg = `failed to determine existence of data on ${dateValue} from "${sheetNameValue}" (${reason})`
         throw new Error(msg)
       }
       throw error
     } finally {
-      await this.sortByDate(sheetName.value, 'ascending')
+      await this.sortByDate(sheetNameValue, 'ascending')
     }
-  }
-
-  private getRange(page = 1, pageSize: number | undefined = undefined): string {
-    if (page > 1 && typeof pageSize !== 'number') {
-      const msg = 'page size must be defined to paginate'
-      throw new Error(msg)
-    }
-    const startRow = (page - 1) * (pageSize ?? 0) + 2
-    const endRow =
-      typeof page === 'number' && typeof pageSize === 'number'
-        ? startRow + pageSize - 1
-        : ''
-    return `A${startRow}:B${endRow}`
   }
 
   async fetch(
-    sheetName: TradedAssetId,
+    assetId: AssetId,
     filter: FetchFilter = FetchFilter.create({
       order: 'ascending',
       pageNumber: 1,
-      pageSize: undefined,
     }),
   ): Promise<PriceRecord[]> {
+    const sheetNameValue = assetId.value
     try {
-      const {
-        order = 'ascending',
-        pageNumber = 1,
-        pageSize = undefined,
-      } = filter.value
-      const range = this.getRange(pageNumber, pageSize)
-      const sheetAndRange = `${sheetName.value}!${range}`
+      const {order, pageNumber, pageSize} = filter.value
+      const range = this.getRange({pageNumber, pageSize})
+      const sheetAndRange = `${sheetNameValue}!${range}`
       if (order !== 'none') {
-        await this.sortByDate(sheetName.value, order)
+        await this.sortByDate(sheetNameValue, order)
       }
       const response = await this.api.spreadsheets.values.get({
-        range: sheetAndRange,
         spreadsheetId: this.spreadsheetId,
+        range: sheetAndRange,
       })
       if (response.status !== 200) {
         const {status, statusText} = response
@@ -197,58 +123,62 @@ export class PriceRecordGoogleSheetsRepository
       if (!Array.isArray(rows)) {
         return []
       }
-      return rows.reduce(this.reduceRows.bind(this), [])
+      return rows.reduce(this.makeReduce(assetId), [])
     } catch (error) {
       if (error instanceof Error) {
         const reason = error.message
-        const msg = `failed to fetch from "${sheetName.value}" (reason: ${reason})`
+        const msg = `failed to fetch from "${sheetNameValue}" (reason: ${reason})`
         throw new Error(msg)
       }
       throw error
     }
   }
 
-  private reduceRows(
+  private makeReduce(
+    assetId: AssetId,
+  ): (
     currentSet: PriceRecord[],
     currentRow: unknown[],
     rowIndex: number,
-  ): PriceRecord[] {
-    const ref = `price record (index: ${rowIndex})`
-    try {
-      if (currentRow.length !== 2) {
-        const msg = `${ref} does not have exactly 2 elements`
-        throw new Error(msg)
-      }
-      const [date, _price] = currentRow
-      const price = Number(_price)
-      if (Number.isNaN(price)) {
-        const msg = `trading price is not a number`
-        throw new Error(msg)
-      }
-      currentSet.push(PriceRecord.create({date, price}))
-      return currentSet
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(`warning: ${ref} is skipped`)
-        console.log(`reason: ${error.message}`)
+  ) => PriceRecord[] {
+    return (currentSet, currentRow, rowIndex) => {
+      try {
+        const mapped = this.map(assetId, currentRow)
+        currentSet.push(mapped)
         return currentSet
+      } catch (error) {
+        if (error instanceof Error) {
+          const reason = error.message
+          const msg = `warning: row index ${rowIndex} has been skipped (${reason})`
+          console.log(msg)
+          return currentSet
+        }
+        throw error
       }
-      throw error
     }
   }
 
-  async persist(
-    sheetName: TradedAssetId,
-    priceRecordValue: PriceRecordDS,
-  ): Promise<void> {
+  private map(assetId: AssetId, row: unknown[]): PriceRecord {
+    const [rawDate, rawPrice] = row
+    return PriceRecord.create({
+      assetId: assetId.value,
+      date: StringValue.create(rawDate).value,
+      price: NumericValue.create(rawPrice).value,
+    })
+  }
+
+  async persist(assetId: AssetId, pricingData: PricingData): Promise<void> {
+    const sheetNameValue = assetId.value
+    const dateValue = pricingData.date.value
+    const priceValue = pricingData.price.value
     try {
       const response = await this.api.spreadsheets.values.append({
-        range: `${sheetName.value}!A2:B`,
+        range: `${sheetNameValue}!A2:B`,
         spreadsheetId: this.spreadsheetId,
         valueInputOption: 'RAW',
         requestBody: {
           majorDimension: 'ROWS',
-          values: [[priceRecordValue.date, priceRecordValue.price]],
+          values: [[dateValue, priceValue]],
         },
       })
       if (response.status !== 200) {
@@ -258,12 +188,12 @@ export class PriceRecordGoogleSheetsRepository
     } catch (error) {
       if (error instanceof Error) {
         const reason = error.message
-        const msg = `failed to persist record to "${sheetName.value}" (reason: ${reason})`
+        const msg = `failed to persist record to "${sheetNameValue}" (reason: ${reason})`
         throw new Error(msg)
       }
       throw error
     } finally {
-      await this.sortByDate(sheetName.value, 'ascending')
+      await this.sortByDate(sheetNameValue, 'ascending')
     }
   }
 }

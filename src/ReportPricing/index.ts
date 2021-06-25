@@ -1,10 +1,10 @@
 import {Express, RequestHandler} from 'express'
-import {ExpressHttpResponderFactory} from './adapterLayer/ExpressHttpResponderFactory'
-import {NodeMailerPriceDataEmailSenderFactory} from './adapterLayer/NodeMailerPriceDataEmailSenderFactory'
-import PricingReporterDriver from './adapterLayer/PricingReporterDriver'
-import {ParametersRepoistory} from './appLayer/ParametersRepository'
-import {PriceRecordRepository} from './appLayer/PriceRecordRepsitory'
-import {SubscriberRepository} from './appLayer/SubscriberRepository'
+import PriceRecordRepository from '../adapterLayer/PriceRecordGoogleSheetsRepository'
+import SubscriberRepository from '../adapterLayer/SubscriberArrayRepository'
+import TrackedAssetRepository from '../adapterLayer/TrackedAssetGoogleSheetsRepository'
+import ExpressHttpResponderFactory from './ExpressHttpResponderFactory'
+import PriceReportEmailSenderFactory from './NodemailerPricingReportEmailSenderFactory'
+import Driver from './PricingReporterDriver'
 
 export function enableReporting(
   routePath: string,
@@ -14,34 +14,36 @@ export function enableReporting(
     emailSenderName: string | undefined
     emailSenderAddress: string | undefined
     app: Express
-    parametersRepository: ParametersRepoistory
     priceRecordRepository: PriceRecordRepository
     subscriberRepository: SubscriberRepository
+    trackedAssetRepository: TrackedAssetRepository
   },
 ): void {
   const requestHandler: RequestHandler = async (req, res, next) => {
     const httpResponderFactory = new ExpressHttpResponderFactory(req, res, next)
+    const httpResponder = httpResponderFactory.make()
     if (dependencies.emailSenderName === undefined) {
-      const reason = 'email sender name must be defined'
-      const msg = `email reporting request handler registration failure (${reason})`
-      throw new Error(msg)
+      const msg = 'email sender name must be defined'
+      httpResponder.badRequest(msg)
+      return
     }
     if (dependencies.emailSenderAddress === undefined) {
-      const reason = 'email sender address must be defined'
-      const msg = `email reporting request handler registration failure (${reason})`
-      throw new Error(msg)
+      const msg = 'email sender address must be defined'
+      httpResponder.badRequest(msg)
+      return
     }
-    const pricingReporterDriver = new PricingReporterDriver(
-      dependencies.parametersRepository,
+    const sender = {
+      name: dependencies.emailSenderName,
+      address: dependencies.emailSenderAddress,
+    }
+    const driver = new Driver(
       dependencies.priceRecordRepository,
       dependencies.subscriberRepository,
-      new NodeMailerPriceDataEmailSenderFactory(dependencies.connectionString, {
-        name: dependencies.emailSenderName,
-        address: dependencies.emailSenderAddress,
-      }),
-      httpResponderFactory,
+      dependencies.trackedAssetRepository,
+      new PriceReportEmailSenderFactory(dependencies.connectionString, sender),
+      httpResponder,
     )
-    await pricingReporterDriver.report(req.body)
+    await driver.report(req.body)
   }
   dependencies.app[httpVerb](routePath, requestHandler)
 }

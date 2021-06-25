@@ -1,6 +1,12 @@
-import {HttpResponderFactory} from './HttpResponderFactory'
-import {RegistrationProcessor} from './RegistrationProcessor'
-import {SubscriberRepository} from './SubscriberRepository'
+import {InvalidRequestModel} from '../appLayer/errors'
+import Interactor, {
+  HttpResponder,
+  SubscriberRepository,
+} from './RegistrationProcessor'
+
+export interface HttpResponderFactory {
+  make(): HttpResponder
+}
 
 export class RegistrationProcessorDriver {
   constructor(
@@ -9,11 +15,23 @@ export class RegistrationProcessorDriver {
   ) {}
 
   driveRegistrationProcessor(requestModel: unknown): void {
-    const registrationProcessor = new RegistrationProcessor(
-      this.subscriberRepository,
-      this.httpResponderFactory.make(),
-    )
-    registrationProcessor.processRegistration(requestModel)
+    const httpResponder = this.httpResponderFactory.make()
+    try {
+      const subscriberInfo = Interactor.validateRequestModel(requestModel)
+      const interactor = new Interactor(
+        this.subscriberRepository,
+        httpResponder,
+      )
+      interactor.processRegistration(subscriberInfo)
+    } catch (error) {
+      if (error instanceof InvalidRequestModel) {
+        const reason = error.message
+        const msg = `invalid subscriber info (${reason})`
+        httpResponder.badRequest(msg)
+        return
+      }
+      httpResponder.report(error)
+    }
   }
 }
 

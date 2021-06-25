@@ -1,30 +1,18 @@
-import {DataValidationFailure, ValueObjectCreationFailure} from './errors'
+import {ValueObjectCreationError} from './errors'
 
 export class HtmlElement {
-  static validate(candidate: unknown): string {
-    if (typeof candidate !== 'string') {
-      const msg = 'value of html element must be a string'
-      throw new DataValidationFailure(msg)
-    }
-    if (candidate.length === 0) {
-      const msg = 'html element must not be an empty string'
-      throw new DataValidationFailure(msg)
-    }
-    return candidate
-  }
-
   private constructor(private readonly _value: string) {}
 
   static create(candidate: unknown): HtmlElement {
-    try {
-      const validValue = HtmlElement.validate(candidate)
-      return new HtmlElement(validValue)
-    } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new ValueObjectCreationFailure(error.message)
-      }
-      throw error
+    if (typeof candidate !== 'string') {
+      const msg = 'html element value must be a string'
+      throw new ValueObjectCreationError(msg)
     }
+    if (candidate.length === 0) {
+      const msg = 'html element value must not be an empty string'
+      throw new ValueObjectCreationError(msg)
+    }
+    return new HtmlElement(candidate)
   }
 
   get value(): string {

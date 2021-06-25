@@ -2,35 +2,35 @@ import {
   InvalidCredentials,
   NonSubscriber,
 } from '../../appLayer/SubscriberValidator'
-import DataCollector from '../appLayer/AllAssetsDataCollector'
-import DataCollectorDriver from './DataCollectorDriver'
+import Interactor from '../appLayer/AllAssetsDataCollector'
+import BaseDriver from './DataCollectorDriver'
 
-export class AllAssetsDataCollectorDriver extends DataCollectorDriver {
-  async collectData(subscriberInfo: unknown): Promise<void> {
-    const presenter = this.presenterFactory.make()
+export class AllAssetsDataCollectorDriver extends BaseDriver {
+  async collectData(subscriberInfoValue: unknown): Promise<void> {
+    const httpResponder = this.httpResponderFactory.make()
     try {
-      this.validateCredentials(subscriberInfo)
-      const dataCollector = new DataCollector(
-        this.executionLogEntryRepository,
-        this.parametersRepository,
-        this.priceRecordRepository,
+      const interactor = new Interactor(
         this.htmlFetcher,
         this.htmlElementExtractor,
         this.dateElementParser,
         this.priceElementParser,
-        presenter,
+        this.executionLogRepository,
+        this.priceRecordRepository,
+        this.trackedAssetRepository,
+        httpResponder,
+        this.validateCredentials(subscriberInfoValue),
       )
-      await dataCollector.collectData()
+      await interactor.collectData()
     } catch (error) {
       if (error instanceof InvalidCredentials) {
-        presenter.badRequest(error.message)
+        httpResponder.badRequest(error.message)
         return
       }
       if (error instanceof NonSubscriber) {
-        presenter.unauthorized(error.message)
+        httpResponder.unauthorized(error.message)
         return
       }
-      presenter.report(error)
+      httpResponder.report(error)
     }
   }
 }

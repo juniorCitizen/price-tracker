@@ -1,37 +1,25 @@
-import {DataValidationFailure, ValueObjectCreationFailure} from './errors'
+import {ValueObjectCreationError} from './errors'
 
 export class DecimalPlaces {
   static readonly max = 6
 
-  static validate(candidate: unknown): number {
-    if (
-      typeof candidate !== 'number' ||
-      Number.isNaN(candidate) ||
-      !Number.isInteger(candidate)
-    ) {
-      const msg = 'value of decimal places must be an integer'
-      throw new DataValidationFailure(msg)
+  private constructor(private readonly _value: number) {}
+
+  static create(candidate: number): DecimalPlaces {
+    if (Number.isNaN(candidate)) {
+      const msg = 'decimal places value must be a valid number'
+      throw new ValueObjectCreationError(msg)
+    }
+    if (!Number.isInteger(candidate)) {
+      const msg = 'decimal places value must be an integer'
+      throw new ValueObjectCreationError(msg)
     }
     if (candidate < 0 || candidate > DecimalPlaces.max) {
       const range = `0 ~ ${DecimalPlaces.max}`
-      const msg = `decimal places must be ${range}`
-      throw new DataValidationFailure(msg)
+      const msg = `decimal places value must be ${range}`
+      throw new ValueObjectCreationError(msg)
     }
-    return candidate
-  }
-
-  private constructor(private readonly _value: number) {}
-
-  static create(candidate: unknown): DecimalPlaces {
-    try {
-      const validValue = DecimalPlaces.validate(candidate)
-      return new DecimalPlaces(validValue)
-    } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new ValueObjectCreationFailure(error.message)
-      }
-      throw error
-    }
+    return new DecimalPlaces(candidate)
   }
 
   get value(): number {

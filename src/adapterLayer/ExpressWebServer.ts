@@ -5,11 +5,11 @@ import {ServerPort} from '../domainLayer/ServerPort'
 export class ExpressWebServer implements Starter {
   constructor(private app: Express) {}
 
-  start(port: ServerPort): void {
+  start(serverPort: ServerPort): void {
     this.app.use(this.catchAll.bind(this))
     this.app.use(this.errorHandler.bind(this))
-    this.app.listen(port.value, () => {
-      console.log(`server listening on port: ${port.value}`)
+    this.app.listen(serverPort.value, () => {
+      console.log(`server listening on port: ${serverPort.value}`)
     })
   }
 

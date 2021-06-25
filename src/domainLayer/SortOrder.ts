@@ -1,46 +1,24 @@
-import {DataValidationFailure, ValueObjectCreationFailure} from './errors'
+import {ValueObjectCreationError} from './errors'
 
-export type ValidSortOrder = 'ascending' | 'descending' | 'none'
+export type ValidSortOrderValue = 'ascending' | 'descending' | 'none'
 
 export class SortOrder {
-  static readonly defaultValue = 'none'
-  static readonly list = ['ascending', 'descending', 'none']
+  private constructor(private readonly _value: ValidSortOrderValue) {}
 
-  static validate(candidate: unknown): ValidSortOrder {
-    if (candidate === undefined) {
-      return SortOrder.defaultValue
-    }
-    if (typeof candidate !== 'string') {
-      const msg = 'value of sort order must be a string if explicitly defined'
-      throw new DataValidationFailure(msg)
-    }
+  static create(candidate: string): SortOrder {
     if (
       candidate !== 'ascending' &&
       candidate !== 'descending' &&
       candidate !== 'none'
     ) {
-      const list = SortOrder.list.map(i => `"${i}"`).join(', ')
-      const msg = `sort order value must be one of (${list})`
-      throw new DataValidationFailure(msg)
+      const list = '"ascending", "descending", or "none"'
+      const msg = `sort order value must be one of ${list}`
+      throw new ValueObjectCreationError(msg)
     }
-    return candidate
+    return new SortOrder(candidate)
   }
 
-  private constructor(private readonly _value: ValidSortOrder) {}
-
-  static create(candidate: unknown): SortOrder {
-    try {
-      const validValue = SortOrder.validate(candidate)
-      return new SortOrder(validValue)
-    } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new ValueObjectCreationFailure(error.message)
-      }
-      throw error
-    }
-  }
-
-  get value(): ValidSortOrder {
+  get value(): ValidSortOrderValue {
     return this._value
   }
 }

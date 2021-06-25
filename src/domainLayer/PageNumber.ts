@@ -1,40 +1,22 @@
-import {DataValidationFailure, ValueObjectCreationFailure} from './errors'
+import {ValueObjectCreationError} from './errors'
 
 export class PageNumber {
-  static readonly defaultValue = 1
-
-  static validate(candidate: unknown): number {
-    if (candidate === undefined) {
-      return PageNumber.defaultValue
-    }
-    if (
-      typeof candidate !== 'number' ||
-      Number.isNaN(candidate) ||
-      !Number.isInteger(candidate)
-    ) {
-      const msg =
-        'value of page number must be an integer if explicitly defined'
-      throw new DataValidationFailure(msg)
-    }
-    if (candidate <= 0) {
-      const msg = 'page number must be a positive integer'
-      throw new DataValidationFailure(msg)
-    }
-    return candidate
-  }
-
   private constructor(private readonly _value: number) {}
 
-  static create(candidate: unknown): PageNumber {
-    try {
-      const validValue = PageNumber.validate(candidate)
-      return new PageNumber(validValue)
-    } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new ValueObjectCreationFailure(error.message)
-      }
-      throw error
+  static create(candidate: number): PageNumber {
+    if (Number.isNaN(candidate)) {
+      const msg = 'page number value must be a valid number'
+      throw new ValueObjectCreationError(msg)
     }
+    if (!Number.isInteger(candidate)) {
+      const msg = 'page number value must be an integer'
+      throw new ValueObjectCreationError(msg)
+    }
+    if (candidate <= 0) {
+      const msg = 'page number value must be positive'
+      throw new ValueObjectCreationError(msg)
+    }
+    return new PageNumber(candidate)
   }
 
   get value(): number {

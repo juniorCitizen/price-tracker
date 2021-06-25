@@ -1,8 +1,8 @@
 import nodeFetch from 'node-fetch'
+import {AssetId} from '../../domainLayer/AssetId'
 import {Html} from '../../domainLayer/Html'
-import {TradedAssetId} from '../../domainLayer/TradedAssetId'
 import {Url} from '../../domainLayer/Url'
-import {HtmlFetcher} from '../appLayer/HtmlFetcher'
+import {HtmlFetcher} from '../appLayer/DataCollector'
 
 export interface TransformUrl {
   (url: string): string
@@ -15,7 +15,7 @@ export interface TransformUrlCache {
 export class NodeFetchHtmlFetcher implements HtmlFetcher {
   constructor(private transformUrlCache: TransformUrlCache) {}
 
-  async execute(url: Url, transformUrlId: TradedAssetId): Promise<Html> {
+  async fetch(url: Url, transformUrlId: AssetId): Promise<Html> {
     const transformUrl = this.transformUrlCache[transformUrlId.value]
     const workingUrl =
       transformUrl === undefined ? url.value : transformUrl(url.value)

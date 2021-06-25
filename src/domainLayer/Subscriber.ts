@@ -1,54 +1,48 @@
 import {EmailAddress} from './EmailAddress'
-import {DataValidationFailure, EntityCreationFailure} from './errors'
+import {EntityCreationError, ValueObjectCreationError} from './errors'
 import {PersonName} from './PersonName'
 
-export interface SubscriberDS {
-  readonly name: string
-  readonly email: string
-}
-
 export class Subscriber {
-  static validate(candidate: unknown): SubscriberDS {
-    if (candidate === undefined || candidate === null) {
-      const msg = 'value of subscriber must be defined and not null'
-      throw new DataValidationFailure(msg)
-    }
-    const {name, email} = candidate as {name: unknown; email: unknown}
-    return {
-      name: PersonName.validate(name),
-      email: EmailAddress.validate(email),
-    }
-  }
-
   private constructor(
-    private readonly _name: string,
-    private readonly _email: string,
+    protected readonly _name: PersonName,
+    protected readonly _email: EmailAddress,
   ) {}
 
-  static create(candidate: unknown): Subscriber {
+  static create(candidate: {
+    readonly name: string | PersonName
+    readonly email: string | EmailAddress
+  }): Subscriber {
     try {
-      const {name, email} = Subscriber.validate(candidate)
-      return new Subscriber(name, email)
+      const {name, email} = candidate
+      return new Subscriber(
+        name instanceof PersonName ? name : PersonName.create(name),
+        email instanceof EmailAddress ? email : EmailAddress.create(email),
+      )
     } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new EntityCreationFailure(error.name)
+      if (error instanceof ValueObjectCreationError) {
+        const reason = error.message
+        const msg = `failed to create subscriber (${reason})`
+        throw new EntityCreationError(msg)
       }
       throw error
     }
   }
 
-  get name(): string {
+  get name(): PersonName {
     return this._name
   }
 
-  get email(): string {
+  get email(): EmailAddress {
     return this._email
   }
 
-  get value(): SubscriberDS {
-    return {
-      name: this._name,
-      email: this._email,
-    }
+  get value(): {
+    readonly name: string
+    readonly email: string
+  } {
+    return Object.freeze({
+      name: this._name.value,
+      email: this._email.value,
+    })
   }
 }

@@ -1,38 +1,20 @@
-import {DataValidationFailure, ValueObjectCreationFailure} from './errors'
+import {ValueObjectCreationError} from './errors'
 
-export type ValidCurrencyCode = 'CNY' | 'TWD' | 'USD'
+export type ValidCurrencyCodeValue = 'CNY' | 'TWD' | 'USD'
 
 export class CurrencyCode {
-  static readonly list = ['CNY', 'TWD', 'USD']
+  private constructor(private readonly _value: ValidCurrencyCodeValue) {}
 
-  static validate(candidate: unknown): ValidCurrencyCode {
-    if (typeof candidate !== 'string') {
-      const msg = 'value of currency code must be a string'
-      throw new DataValidationFailure(msg)
-    }
+  static create(candidate: string): CurrencyCode {
     if (candidate !== 'CNY' && candidate !== 'TWD' && candidate !== 'USD') {
-      const list = CurrencyCode.list.map(i => `"${i}"`).join(', ')
-      const msg = `currency code must be one of (${list})`
-      throw new DataValidationFailure(msg)
+      const list = '"CNY", "TWD", or "USD"'
+      const msg = `currency code value must be one of ${list}`
+      throw new ValueObjectCreationError(msg)
     }
-    return candidate
+    return new CurrencyCode(candidate)
   }
 
-  private constructor(private readonly _value: ValidCurrencyCode) {}
-
-  static create(candidate: unknown): CurrencyCode {
-    try {
-      const validValue = CurrencyCode.validate(candidate)
-      return new CurrencyCode(validValue)
-    } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new ValueObjectCreationFailure(error.message)
-      }
-      throw error
-    }
-  }
-
-  get value(): ValidCurrencyCode {
+  get value(): ValidCurrencyCodeValue {
     return this._value
   }
 }

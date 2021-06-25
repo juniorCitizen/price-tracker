@@ -2,38 +2,40 @@ import {
   InvalidCredentials,
   NonSubscriber,
 } from '../../appLayer/SubscriberValidator'
-import DataCollector from '../appLayer/SingleAssetDataCollector'
-import DataCollectorDriver from './DataCollectorDriver'
+import Interactor from '../appLayer/SingleAssetDataCollector'
+import BaseDriver from './DataCollectorDriver'
 
-export class SingleAssetDataCollectorDriver extends DataCollectorDriver {
+export class SingleAssetDataCollectorDriver extends BaseDriver {
   async collectData(requestModel: {
-    subscriberInfo: unknown
     assetIdValue: unknown
+    subscriberInfoValue: unknown
   }): Promise<void> {
-    const presenter = this.presenterFactory.make()
+    const {assetIdValue, subscriberInfoValue} = requestModel
+    const httpResponder = this.httpResponderFactory.make()
     try {
-      this.validateCredentials(requestModel.subscriberInfo)
-      const dataCollector = new DataCollector(
-        this.executionLogEntryRepository,
-        this.parametersRepository,
-        this.priceRecordRepository,
+      const assetId = Interactor.validateRequestModel(assetIdValue)
+      const interactor = new Interactor(
         this.htmlFetcher,
         this.htmlElementExtractor,
         this.dateElementParser,
         this.priceElementParser,
-        presenter,
+        this.executionLogRepository,
+        this.priceRecordRepository,
+        this.trackedAssetRepository,
+        httpResponder,
+        this.validateCredentials(subscriberInfoValue),
       )
-      await dataCollector.collectData(requestModel.assetIdValue)
+      await interactor.collectData(assetId)
     } catch (error) {
       if (error instanceof InvalidCredentials) {
-        presenter.badRequest(error.message)
+        httpResponder.badRequest(error.message)
         return
       }
       if (error instanceof NonSubscriber) {
-        presenter.unauthorized(error.message)
+        httpResponder.unauthorized(error.message)
         return
       }
-      presenter.report(error)
+      httpResponder.report(error)
     }
   }
 }

@@ -1,31 +1,23 @@
-export class DataValidationFailure extends Error {
+export class DataValidationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'DataValidationFailure'
-    Object.setPrototypeOf(this, DataValidationFailure.prototype)
+    this.name = 'DataValidationError'
+    Object.setPrototypeOf(this, DataValidationError.prototype)
   }
 }
 
-export class EntityCreationFailure extends Error {
+export class EntityCreationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'EntityCreationFailure'
-    Object.setPrototypeOf(this, EntityCreationFailure.prototype)
+    this.name = 'EntityCreationError'
+    Object.setPrototypeOf(this, EntityCreationError.prototype)
   }
 }
 
-export class ValueObjectCreationFailure extends Error {
+export class ValueObjectCreationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'ValueObjectCreationFailure'
-    Object.setPrototypeOf(this, ValueObjectCreationFailure.prototype)
-  }
-}
-
-export class PropertyAccessFailure extends Error {
-  constructor(msg: string) {
-    super(msg)
-    this.name = 'PropertyAccessFailure'
-    Object.setPrototypeOf(this, PropertyAccessFailure.prototype)
+    this.name = 'ValueObjectCreationError'
+    Object.setPrototypeOf(this, ValueObjectCreationError.prototype)
   }
 }

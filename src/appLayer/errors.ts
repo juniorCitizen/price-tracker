@@ -1,32 +1,24 @@
-export class TypeAssertionFailure extends Error {
+export class StringCreationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'TypeAssertionFailure'
-    Object.setPrototypeOf(this, TypeAssertionFailure.prototype)
+    this.name = 'StringCreationError'
+    Object.setPrototypeOf(this, StringCreationError.prototype)
   }
 }
 
-export class StringValueCreationFailure extends Error {
+export class NumberCreationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'StringValueCreationFailure'
-    Object.setPrototypeOf(this, StringValueCreationFailure.prototype)
+    this.name = 'NumberCreationError'
+    Object.setPrototypeOf(this, NumberCreationError.prototype)
   }
 }
 
-export class NumericValueCreationFailure extends Error {
+export class BooleanCreationError extends Error {
   constructor(msg: string) {
     super(msg)
-    this.name = 'NumericValueCreationFailure'
-    Object.setPrototypeOf(this, NumericValueCreationFailure.prototype)
-  }
-}
-
-export class BooleanValueCreationFailure extends Error {
-  constructor(msg: string) {
-    super(msg)
-    this.name = 'BooleanValueCreationFailure'
-    Object.setPrototypeOf(this, BooleanValueCreationFailure.prototype)
+    this.name = 'BooleanCreationError'
+    Object.setPrototypeOf(this, BooleanCreationError.prototype)
   }
 }
 
@@ -35,21 +27,5 @@ export class InvalidRequestModel extends Error {
     super(msg)
     this.name = 'InvalidRequestModel'
     Object.setPrototypeOf(this, InvalidRequestModel.prototype)
-  }
-}
-
-export class NoWorkableParameters extends Error {
-  constructor(msg: string) {
-    super(msg)
-    this.name = 'NoWorkableParameters'
-    Object.setPrototypeOf(this, NoWorkableParameters.prototype)
-  }
-}
-
-export class FailedToPresentData extends Error {
-  constructor(msg: string) {
-    super(msg)
-    this.name = 'FailedToPresentData'
-    Object.setPrototypeOf(this, FailedToPresentData.prototype)
   }
 }

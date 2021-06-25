@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express'
-import {ExpressHttpResponder} from './ExpressHttpResponder'
-import {HttpResponder} from './HttpResponder'
-import {HttpResponderFactory} from './HttpResponderFactory'
+import ExpressHttpResponder from '../adapterLayer/ExpressHttpResponder'
+import {HttpResponder} from './RegistrationProcessor'
+import {HttpResponderFactory} from './RegistrationProcessorDriver'
 
 export class ExpressHttpResponderFactory implements HttpResponderFactory {
   constructor(

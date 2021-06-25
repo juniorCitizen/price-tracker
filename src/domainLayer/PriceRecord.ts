@@ -1,51 +1,58 @@
-import {DataValidationFailure, EntityCreationFailure} from './errors'
+import {AssetId} from './AssetId'
+import {EntityCreationError, ValueObjectCreationError} from './errors'
 import {TradingDate} from './TradingDate'
 import {TradingPrice} from './TradingPrice'
 
-export interface PriceRecordDS {
-  readonly date: string
-  readonly price: number
-}
-
 export class PriceRecord {
-  static validate(candidate: unknown): PriceRecordDS {
-    if (candidate === undefined || candidate === null) {
-      const msg = 'value of price record must be defined and not null'
-      throw new DataValidationFailure(msg)
-    }
-    const {date, price} = candidate as {date: unknown; price: unknown}
-    return {
-      date: TradingDate.validate(date),
-      price: TradingPrice.validate(price),
-    }
-  }
-
   private constructor(
-    private readonly _date: string,
-    private readonly _price: number,
+    private readonly _assetId: AssetId,
+    private readonly _date: TradingDate,
+    private readonly _price: TradingPrice,
   ) {}
 
-  static create(candidate: unknown): PriceRecord {
+  static create(properties: {
+    readonly assetId: string | AssetId
+    readonly date: string | TradingDate
+    readonly price: number | TradingPrice
+  }): PriceRecord {
     try {
-      const {date, price} = PriceRecord.validate(candidate)
-      return new PriceRecord(date, price)
+      const {assetId, date, price} = properties
+      return new PriceRecord(
+        assetId instanceof AssetId ? assetId : AssetId.create(assetId),
+        date instanceof TradingDate ? date : TradingDate.create(date),
+        price instanceof TradingPrice ? price : TradingPrice.create(price),
+      )
     } catch (error) {
-      if (error instanceof DataValidationFailure) {
-        throw new EntityCreationFailure(error.message)
+      if (error instanceof ValueObjectCreationError) {
+        const reason = error.message
+        const msg = `failed to create price record (${reason})`
+        throw new EntityCreationError(msg)
       }
       throw error
     }
   }
 
-  get date(): string {
+  get assetId(): AssetId {
+    return this._assetId
+  }
+
+  get date(): TradingDate {
     return this._date
   }
 
-  get price(): number {
+  get price(): TradingPrice {
     return this._price
   }
 
-  get value(): PriceRecordDS {
-    return {date: this._date, price: this._price}
+  get value(): {
+    readonly assetId: string
+    readonly date: string
+    readonly price: number
+  } {
+    return Object.freeze({
+      assetId: this._assetId.value,
+      date: this._date.value,
+      price: this._price.value,
+    })
   }
 }

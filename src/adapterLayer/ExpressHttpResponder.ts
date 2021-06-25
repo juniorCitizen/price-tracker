@@ -15,9 +15,9 @@ import {
   Unauthorized,
 } from '../appLayer/Presenter'
 
-export abstract class ExpressHttpResponder<OK_PAYLOAD>
+export class ExpressHttpResponder
   implements
-    Ok<OK_PAYLOAD>,
+    Ok<string>,
     Created,
     NoContent,
     BadRequest,
@@ -37,7 +37,11 @@ export abstract class ExpressHttpResponder<OK_PAYLOAD>
     protected next: NextFunction,
   ) {}
 
-  abstract ok(payload?: OK_PAYLOAD): void
+  ok(message?: string): void {
+    message === undefined
+      ? this.res.sendStatus(200)
+      : this.res.status(200).send(message)
+  }
 
   created(message?: string): void {
     message === undefined

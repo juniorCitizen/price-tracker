@@ -1,7 +1,7 @@
+import {AssetId} from '../../domainLayer/AssetId'
 import {HtmlElement} from '../../domainLayer/HtmlElement'
-import {TradedAssetId} from '../../domainLayer/TradedAssetId'
 import {TradingPrice} from '../../domainLayer/TradingPrice'
-import {PriceElementParaser} from '../appLayer/PriceElementParser'
+import {PriceElementParser} from '../appLayer/DataCollector'
 
 export interface ParsePriceElement {
   (htmlElementValue: string): number
@@ -11,13 +11,10 @@ export interface ParsePriceElementCache {
   [parsePriceElementIdValue: string]: ParsePriceElement
 }
 
-export class GenericPriceElementParser implements PriceElementParaser {
+export class GenericPriceElementParser implements PriceElementParser {
   constructor(private parsePriceElementCache: ParsePriceElementCache) {}
 
-  execute(
-    htmlElement: HtmlElement,
-    parsePriceElementId: TradedAssetId,
-  ): TradingPrice {
+  parse(htmlElement: HtmlElement, parsePriceElementId: AssetId): TradingPrice {
     const parsePriceElement =
       this.parsePriceElementCache[parsePriceElementId.value]
     if (parsePriceElement === undefined) {
