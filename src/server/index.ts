@@ -1,6 +1,6 @@
 void (() => {
   try {
-    console.log()
+    console.log('test')
   } catch (error) {
     console.error(error)
   }
