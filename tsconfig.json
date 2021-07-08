@@ -1,21 +1,19 @@
 {
-  "include": ["src", "./*.js"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     // project options
     "module": "CommonJS",
-    "outDir": "dist",
     "removeComments": true,
-    "rootDir": "src/server",
     "sourceMap": true,
     "target": "ES5",
     // strict checks
     "strict": true,
     // module resolution
+    "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     // source maps
     // linter checks
     "noFallthroughCasesInSwitch": true,

@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/server"],
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+    // project options
+    "outDir": "dist",
+    "rootDir": "src/server"
+    // strict checks
+    // module resolution
+    // source maps
+    // linter checks
+    // advanced
+  }
+}

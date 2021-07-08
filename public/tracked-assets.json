@@ -1,0 +1,121 @@
+[
+  {
+    "id": "bot-usd",
+    "asset": {
+      "name": "美金現金收盤匯率",
+      "unit": "美元",
+      "source": "台灣銀行",
+      "currency": "TWD",
+      "decimals": 3
+    },
+    "parameters": {
+      "website": "台灣銀行",
+      "url": "https://rate.bot.com.tw/xrt/all",
+      "dateSelector": "main.main div#ie11andabove div.container p.text-info",
+      "priceSelector": "table tbody tr:first-child td:nth-child(2)"
+    },
+    "active": true
+  },
+  {
+    "id": "cbc-usd",
+    "asset": {
+      "name": "行間美元成交收盤匯率",
+      "unit": "美元",
+      "source": "台灣央行",
+      "currency": "TWD",
+      "decimals": 3
+    },
+    "parameters": {
+      "website": "台灣央行",
+      "url": "https://www.cbc.gov.tw/tw/lp-645-1.html",
+      "dateSelector": "table tbody tr:nth-child(2) td:first-child span",
+      "priceSelector": "table tbody tr:nth-child(2) td:last-child span"
+    },
+    "active": true
+  },
+  {
+    "id": "boc-usd",
+    "asset": {
+      "name": "美金現鈔買入收盤匯率",
+      "unit": "美元",
+      "source": "中國銀行",
+      "currency": "CNY",
+      "decimals": 4
+    },
+    "parameters": {
+      "website": "快易理財網",
+      "url": "https://www.kylc.com/bank/rmbfx/b-boc.html",
+      "dateSelector": "table tbody tr:nth-child(3) td:nth-child(6)",
+      "priceSelector": "table tbody tr:nth-child(3) td:nth-child(3)"
+    },
+    "active": true
+  },
+  {
+    "id": "lme",
+    "asset": {
+      "name": "純鋁現金價",
+      "unit": "公噸",
+      "source": "LME",
+      "currency": "USD",
+      "decimals": 2
+    },
+    "parameters": {
+      "website": "倫敦金屬交易所",
+      "url": "https://www.lme.com",
+      "dateSelector": "table thead tr th",
+      "priceSelector": "table tbody tr:first-child td"
+    },
+    "active": true
+  },
+  {
+    "id": "cisa-crc",
+    "asset": {
+      "name": "冷軋鋼板現貨價",
+      "unit": "公噸",
+      "source": "中國鋼鐵工業協會",
+      "currency": "CNY",
+      "decimals": 0
+    },
+    "parameters": {
+      "website": "財經M平方",
+      "url": "https://www.macromicro.me/collections/20/mm-steel/219/steel-price",
+      "dateSelector": "article.bd-sidebar div.sidebar-box-block.chart-stat-lastrows ul li:nth-child(4) div.date-label",
+      "priceSelector": "article.bd-sidebar div.sidebar-box-block.chart-stat-lastrows ul li:nth-child(4) div.stat-val span.val"
+    },
+    "active": true
+  },
+  {
+    "id": "cisa-hrc",
+    "asset": {
+      "name": "熱軋鋼板現貨價",
+      "unit": "公噸",
+      "source": "中國鋼鐵工業協會",
+      "currency": "CNY",
+      "decimals": 0
+    },
+    "parameters": {
+      "website": "財經M平方",
+      "url": "https://www.macromicro.me/collections/20/mm-steel/219/steel-price",
+      "dateSelector": "article.bd-sidebar div.sidebar-box-block.chart-stat-lastrows ul li:nth-child(3) div.date-label",
+      "priceSelector": "article.bd-sidebar div.sidebar-box-block.chart-stat-lastrows ul li:nth-child(3) div.stat-val span.val"
+    },
+    "active": true
+  },
+  {
+    "id": "nanhai",
+    "asset": {
+      "name": "有票鋁錠均價",
+      "unit": "公噸",
+      "source": "南海靈通",
+      "currency": "CNY",
+      "decimals": 0
+    },
+    "parameters": {
+      "website": "大沥铝材网",
+      "url": "https://www.lvdingjia.com/price/nanhai",
+      "dateSelector": "table tbody tr:first-child td:first-child a",
+      "priceSelector": "table tbody tr:first-child td:nth-child(4)"
+    },
+    "active": true
+  }
+]

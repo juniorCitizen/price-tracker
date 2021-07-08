@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["vite.config.ts", "src/client"],
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+    // project options
+    "importHelpers": true,
+    "jsx": "preserve",
+    "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"],
+    "module": "ESNext",
+    "plugins": [
+      {
+        "name": "@vuedx/typescript-vetur"
+      }
+    ],
+    // strict checks
+    // module resolution
+    "paths": {
+      "@/*": ["src/client/*"]
+    },
+    "types": ["vite/client"],
+    // source maps
+    // linter checks
+    // advanced
+    "resolveJsonModule": true
+  }
+}
